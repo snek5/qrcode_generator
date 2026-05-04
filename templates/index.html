@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlarus QR Code Generator</title>
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .form-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+        }
+        
+        .form-section h3 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.2em;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .color-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .color-input-group input[type="color"] {
+            width: 60px;
+            height: 40px;
+            padding: 2px;
+            cursor: pointer;
+        }
+        
+        .color-input-group input[type="text"] {
+            flex: 1;
+        }
+        
+        .gradient-colors {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .color-preview {
+            width: 100%;
+            height: 40px;
+            border-radius: 8px;
+            margin-top: 5px;
+            border: 2px solid #ddd;
+        }
+        
+        textarea {
+            resize: vertical;
+            font-family: inherit;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #fff;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .checkbox-group input {
+            width: auto;
+            margin: 0;
+        }
+        
+        .image-preview {
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .image-preview.active {
+            display: block;
+        }
+        
+        .image-preview img {
+            max-width: 100px;
+            max-height: 100px;
+            border-radius: 10px;
+            border: 2px solid #667eea;
+            padding: 5px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            transition: transform 0.2s;
+            margin-top: 20px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            margin-top: 15px;
+        }
+        
+        .qr-result {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            text-align: center;
+            animation: fadeInUp 0.5s;
+        }
+        
+        .qr-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            display: inline-block;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .qr-container img {
+            max-width: 250px;
+            display: block;
+        }
+        
+        .qr-details {
+            text-align: left;
+            margin-top: 15px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #667eea;
+            font-size: 18px;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .info-text {
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Atlarus QR Code Generator</h1>
+            <p>Create stunning QR codes with custom colors and artistic shapes</p>
+        </div>
+        
+        <div class="content">
+            <form hx-post="/generate-qr" 
+                  hx-target="#qr-result" 
+                  hx-swap="innerHTML" 
+                  hx-indicator="#loading"
+                  enctype="multipart/form-data"
+                  id="qr-form">
+                
+                <div class="form-grid">
+                    <!-- Left Column: Basic Settings -->
+                    <div class="form-section">
+                        <h3>📝 Content & Style</h3>
+                        
+                        <div class="form-group">
+                            <label for="data">Data / URL:</label>
+                            <textarea id="data" name="data" rows="3" 
+                                      placeholder="Enter text, URL, contact info..."
+                                      required></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="module_style">Module Shape:</label>
+                                <select id="module_style" name="module_style">
+                                    <option value="circle">⚪ Circle (Artistic)</option>
+                                    <option value="square">⬛ Square (Classic)</option>
+                                    <option value="rounded">🟢 Rounded Corners</option>
+                                    <option value="gapped">🔲 Gapped Squares</option>
+                                    <option value="vertical_bars">▮ Vertical Bars</option>
+                                    <option value="horizontal_bars">▬ Horizontal Bars</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="error_correction">Error Correction:</label>
+                                <select id="error_correction" name="error_correction">
+                                    <option value="L">L - 7% recovery</option>
+                                    <option value="M" selected>M - 15% recovery</option>
+                                    <option value="Q">Q - 25% recovery</option>
+                                    <option value="H">H - 30% recovery (Best for colors)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="version">Version (Optional):</label>
+                                <input type="number" id="version" name="version" 
+                                       min="1" max="40" placeholder="Auto">
+                                <div class="info-text">Leave empty for auto-select</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="box_size">Box Size (px):</label>
+                                <input type="number" id="box_size" name="box_size" 
+                                       min="4" max="30" value="10">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="border">Border (boxes):</label>
+                            <input type="number" id="border" name="border" 
+                                   min="0" max="10" value="4">
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column: Color Settings -->
+                    <div class="form-section">
+                        <h3>🎨 Color Customization</h3>
+                        
+                        <div class="form-group">
+                            <label for="color_type">Color Type:</label>
+                            <select id="color_type" name="color_type" onchange="toggleColorOptions()">
+                                <option value="solid">Solid Color</option>
+                                <option value="linear_gradient">Linear Gradient (Left to Right)</option>
+                                <option value="radial_gradient">Radial Gradient (Center to Edge)</option>
+                                <option value="diagonal_gradient">Diagonal Gradient (Top-Left to Bottom-Right)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Solid Color Options -->
+                        <div id="solid-options">
+                            <div class="form-group">
+                                <label for="front_color">QR Code Color:</label>
+                                <div class="color-input-group">
+                                    <input type="color" id="front_color" name="front_color" value="#000000">
+                                    <input type="text" id="front_color_text" value="#000000">
+                                </div>
+                                <div class="color-preview" id="front_preview" style="background-color: #000000;"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="back_color">Background Color:</label>
+                                <div class="color-input-group">
+                                    <input type="color" id="back_color" name="back_color" value="#FFFFFF">
+                                    <input type="text" id="back_color_text" value="#FFFFFF">
+                                </div>
+                                <div class="color-preview" id="back_preview" style="background-color: #FFFFFF;"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Gradient Options -->
+                        <div id="gradient-options" style="display: none;">
+                            <div class="form-group">
+                                <label>Gradient Colors:</label>
+                                <div class="gradient-colors">
+                                    <div>
+                                        <label>Color 1:</label>
+                                        <div class="color-input-group">
+                                            <input type="color" id="gradient_color1" name="gradient_color1" value="#FF0000">
+                                            <input type="text" id="gradient_color1_text" value="#FF0000">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label>Color 2:</label>
+                                        <div class="color-input-group">
+                                            <input type="color" id="gradient_color2" name="gradient_color2" value="#0000FF">
+                                            <input type="text" id="gradient_color2_text" value="#0000FF">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="info-text">Colors will blend beautifully in your QR code</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="gradient_back_color">Background Color:</label>
+                                <div class="color-input-group">
+                                    <input type="color" id="gradient_back_color" name="back_color" value="#FFFFFF">
+                                    <input type="text" id="gradient_back_color_text" value="#FFFFFF">
+                                </div>
+                            </div>
+                            
+                            <input type="hidden" id="gradient_type" name="gradient_type" value="linear">
+                        </div>
+                        
+                        <!-- Image Embedding -->
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="embed_image" name="embed_image">
+                                <label for="embed_image">🎯 Embed Logo / Image in Center</label>
+                            </div>
+                            
+                            <div id="image-upload-section" style="display: none; margin-top: 15px;">
+                                <label for="image_file">Choose Image:</label>
+                                <input type="file" id="image_file" name="image_file" 
+                                       accept="image/*" onchange="previewImage(this)">
+                                <div class="info-text">PNG with transparency works best for colored backgrounds</div>
+                                <div class="image-preview" id="image-preview">
+                                    <img id="preview-img" alt="Preview">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit">✨ Generate Custom QR Code</button>
+            </form>
+            
+            <div id="loading" class="loading htmx-indicator" style="display: none;">
+                Creating your custom QR code...
+            </div>
+            
+            <div id="qr-result"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Sync color pickers
+        function syncColorPickers() {
+            // Solid colors
+            const frontColor = document.getElementById('front_color');
+            const frontText = document.getElementById('front_color_text');
+            const backColor = document.getElementById('back_color');
+            const backText = document.getElementById('back_color_text');
+            
+            frontColor.addEventListener('input', function() {
+                frontText.value = this.value;
+                document.getElementById('front_preview').style.backgroundColor = this.value;
+            });
+            
+            frontText.addEventListener('input', function() {
+                if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+                    frontColor.value = this.value;
+                    document.getElementById('front_preview').style.backgroundColor = this.value;
+                }
+            });
+            
+            backColor.addEventListener('input', function() {
+                backText.value = this.value;
+                document.getElementById('back_preview').style.backgroundColor = this.value;
+            });
+            
+            backText.addEventListener('input', function() {
+                if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+                    backColor.value = this.value;
+                    document.getElementById('back_preview').style.backgroundColor = this.value;
+                }
+            });
+            
+            // Gradient colors
+            const grad1 = document.getElementById('gradient_color1');
+            const grad1Text = document.getElementById('gradient_color1_text');
+            const grad2 = document.getElementById('gradient_color2');
+            const grad2Text = document.getElementById('gradient_color2_text');
+            
+            grad1.addEventListener('input', function() {
+                grad1Text.value = this.value;
+            });
+            
+            grad2.addEventListener('input', function() {
+                grad2Text.value = this.value;
+            });
+        }
+        
+        function toggleColorOptions() {
+            const colorType = document.getElementById('color_type').value;
+            const solidOptions = document.getElementById('solid-options');
+            const gradientOptions = document.getElementById('gradient-options');
+            const gradientType = document.getElementById('gradient_type');
+            
+            if (colorType === 'solid') {
+                solidOptions.style.display = 'block';
+                gradientOptions.style.display = 'none';
+            } else {
+                solidOptions.style.display = 'none';
+                gradientOptions.style.display = 'block';
+                
+                // Set gradient type based on selection
+                if (colorType === 'linear_gradient') {
+                    gradientType.value = 'linear';
+                } else if (colorType === 'radial_gradient') {
+                    gradientType.value = 'radial';
+                } else if (colorType === 'diagonal_gradient') {
+                    gradientType.value = 'diagonal';
+                }
+            }
+        }
+        
+        // Image embedding toggle
+        document.getElementById('embed_image').addEventListener('change', function(e) {
+            const uploadSection = document.getElementById('image-upload-section');
+            uploadSection.style.display = e.target.checked ? 'block' : 'none';
+            
+            if (e.target.checked) {
+                const errorSelect = document.getElementById('error_correction');
+                if (errorSelect.value === 'L') {
+                    errorSelect.value = 'H';
+                }
+            }
+        });
+        
+        function previewImage(input) {
+            const preview = document.getElementById('image-preview');
+            const previewImg = document.getElementById('preview-img');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    preview.classList.add('active');
+                }
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                preview.classList.remove('active');
+            }
+        }
+        
+        function downloadQR() {
+            const form = document.getElementById('qr-form');
+            const formData = new FormData(form);
+            const downloadBtn = event.target;
+            const originalText = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = '⏳ Generating...';
+            downloadBtn.disabled = true;
+            
+            fetch('/download-qr', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'custom_qrcode.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Download error:', error);
+                alert('Error downloading QR code');
+            })
+            .finally(() => {
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.disabled = false;
+            });
+        }
+        
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const data = document.getElementById('data').value.trim();
+            if (!data) {
+                e.preventDefault();
+                alert('Please enter some data for the QR code');
+                return false;
+            }
+            return true;
+        });
+        
+        // Initialize
+        syncColorPickers();
+        toggleColorOptions();
+    </script>
+</body>
+</html>
