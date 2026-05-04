@@ -1,6 +1,6 @@
 # QR Code Generator
 
-A lightweight Flask app for creating custom QR codes with style, color, gradient, and logo embedding options.
+A lightweight Flask app with HTMX frontend for creating custom QR codes with style, color, gradient, and logo embedding options.
 
 ## Features
 
@@ -23,7 +23,7 @@ A lightweight Flask app for creating custom QR codes with style, color, gradient
 1. Clone the repository:
 
     ```bash
-    git clone <repo-url>
+    git clone https://github.com/snek5/qrcode_generator
     cd qrcode_generator
     ```
 
